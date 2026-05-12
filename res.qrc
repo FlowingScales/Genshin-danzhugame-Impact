@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/res">
+        <file>photo/yuanshen_start.png</file>
+        <file>photo/qiuqiu_brick.png</file>
+        <file>photo/yuanshen_end.png</file>
+        <file>photo/yuanshen_begin.png</file>
+    </qresource>
+</RCC>
