@@ -12,3 +12,7 @@ Space key:Restart the game after game over
 2.Open the project in Qt Creator
 
 3.Build and Run the project
+## Update Log
+V1.0
+- Replace default paddle with Furina animated character
+- Idle / left / right walk animation
