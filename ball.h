@@ -15,9 +15,9 @@ signals:
 private:
     //弹珠圆心坐标
     int m_x=400;
-    int m_y=500;
+    int m_y=450;
     //弹珠半径
-    int m_r=10;
+    int m_r=25;
     //弹珠初速度
     int m_vx=4;
     int m_vy=-4;

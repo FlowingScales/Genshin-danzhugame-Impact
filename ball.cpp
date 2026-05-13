@@ -16,9 +16,10 @@ void Ball:: move()
 //弹珠绘制
 void Ball::draw(QPainter* painter)
 {
-    painter->setBrush(Qt::white);//弹珠内部填充颜色
-    painter->setPen(Qt::black);//弹珠边框颜色
-    painter->drawEllipse(m_x - m_r, m_y - m_r,m_r * 2, m_r * 2);//绘制椭圆
+    QPixmap ballPic(":/res/photo/Surintendante_Chevalmarin.png");
+    //将图片缩放到弹珠的大小
+    ballPic = ballPic.scaled(2*m_r, 2*m_r, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    painter->drawPixmap(m_x-m_r, m_y-m_r, ballPic);
 }
 
 //碰撞反弹

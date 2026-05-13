@@ -9,5 +9,8 @@
         <file>photo/Furrina_right01.png</file>
         <file>photo/Furrina_right02.png</file>
         <file>photo/Furrina_idle.png</file>
+        <file>photo/Gentilhomme_Usher.png</file>
+        <file>photo/Mademoiselle_Crabaletta.png</file>
+        <file>photo/Surintendante_Chevalmarin.png</file>
     </qresource>
 </RCC>

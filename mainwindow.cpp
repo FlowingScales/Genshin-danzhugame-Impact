@@ -93,23 +93,55 @@ void MainWindow::gameLoop()
         m_patternTimer->stop();//停止图形切换
     }//判断弹珠底部是否超出窗口
 
+
+
+    //跳跃逻辑
+    if(m_isJumping)
+    {
+        if(m_jumpOffset < JUMP_MAX_HEIGHT)
+        {
+            m_jumpOffset += JUMP_SPEED_UP; // 往上跳
+        }
+        else
+        {
+         //跳到最高处，停止上升，开始下落
+            m_isJumping = false;
+        }
+    }
+    else
+    {
+        // 重力自动落回去
+        if(m_jumpOffset > 0)
+        {
+            m_jumpOffset -= JUMP_SPEED_DOWN;
+        }
+        else{
+            m_canJump=true;//已落地，可起跳
+        }
+    }
     update();//刷新画面
 }
 
-//键盘控制挡板移动
+//键盘控制挡板移动和跳跃
 void MainWindow::keyPressEvent(QKeyEvent* e)
 {
-    if(e->key() == Qt::Key_Left)
+    if(e->key() == Qt::Key_Left)//左箭头向左移
     {
         m_paddle->moveLeft();
         m_moveLeftFlag  = true;
         m_moveRightFlag = false;
     }
-    else if(e->key() == Qt::Key_Right)
+     if(e->key() == Qt::Key_Right)//右箭头向右移
     {
         m_paddle->moveRight();
         m_moveRightFlag = true;
         m_moveLeftFlag  = false;
+    }
+
+    if((e->key() == Qt::Key_Up)&&m_canJump)//上箭头向上跳跃
+    {
+         m_isJumping = true;
+        m_canJump=false;
     }
 
 
@@ -203,7 +235,7 @@ void MainWindow::paintEvent(QPaintEvent *)
         drawPic = drawPic.scaled(m_paddle->paddle_width(), m_paddle->paddle_height()+85,
                                  Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
         //用挡板坐标绘制
-        p.drawPixmap(m_paddle->paddle_x(), m_paddle->paddle_y(), drawPic);
+        p.drawPixmap(m_paddle->paddle_x(), m_paddle->paddle_y()-m_jumpOffset, drawPic);
 
     //画弹珠
     m_ball->draw(&p);
@@ -247,6 +279,11 @@ void MainWindow::resetGame()
 
     //重置挡板位置
     m_paddle->setPos(m_paddleStartX, this->height() - 100);
+
+    //重置跳跃状态
+    m_isJumping=false;
+    m_canJump=true;
+    m_jumpOffset=0;
 
     //重新生成砖块(切回模式0)
     m_currentMode = 0;

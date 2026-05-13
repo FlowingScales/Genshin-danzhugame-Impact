@@ -34,21 +34,20 @@ protected:
 
 private slots:
     void gameLoop();   // 游戏主循环定时器
-private:
 
+    //砖块图案，定时切换
+private:
     // 创建砖块图案
     void initBricksByMode(int mode);
-
     // 全部碰撞检测
     void collisionCheck();
-
     //当前模式
     int m_currentMode;
-
     // 每15秒切换一次的定时器
     QTimer* m_patternTimer;
 
 
+    //动画小人
 private:
     // 人物逐帧图片
     QPixmap m_roleIdle;//待机
@@ -60,6 +59,16 @@ private:
     // 记录当前移动状态
     bool m_moveLeftFlag;
     bool m_moveRightFlag;
+
+
+    //跳跃相关
+private:
+    bool m_isJumping = false;//是否跳跃
+    bool m_canJump=true;//能否跳跃
+    int m_jumpOffset = 0;//当前向上偏移
+    const int JUMP_SPEED_UP = 8;//上升速度
+    const int JUMP_SPEED_DOWN = 8;//下落重力
+    const int JUMP_MAX_HEIGHT = 80;//最大跳跃高度
 
 
 private:
