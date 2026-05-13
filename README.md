@@ -16,3 +16,6 @@ Space key:Restart the game after game over
 V1.0
 - Replace default paddle with Furina animated character
 - Idle / left / right walk animation
+v2.0
+- Added paddle jump function (Up Arrow key)
+- Replaced default ball with custom texture
