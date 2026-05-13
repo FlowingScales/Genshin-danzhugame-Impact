@@ -4,5 +4,10 @@
         <file>photo/qiuqiu_brick.png</file>
         <file>photo/yuanshen_end.png</file>
         <file>photo/yuanshen_begin.png</file>
+        <file>photo/Furrina_left01.png</file>
+        <file>photo/Furrina_left02.png</file>
+        <file>photo/Furrina_right01.png</file>
+        <file>photo/Furrina_right02.png</file>
+        <file>photo/Furrina_idle.png</file>
     </qresource>
 </RCC>

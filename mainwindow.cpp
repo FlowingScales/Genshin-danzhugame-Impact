@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
+#include "paddle.h"
 #include <QPainter>
 #include <QPixmap>
 #include <QVector>
@@ -9,33 +10,56 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
     // 窗口大小
     this->resize(1150,900);
 
-
-    //初始化从模式-0开始
-    m_currentMode=0;
+    //砖块图案
+    m_currentMode=0;//初始化从模式-0开始
     initBricksByMode(m_currentMode);
-    //切换图案的定时器
-    m_patternTimer = new QTimer(this);
+    m_patternTimer = new QTimer(this);  //切换图案的定时器
     connect(m_patternTimer, &QTimer::timeout, this, [=](){
-        //循环切换0—4模式
         m_currentMode = (m_currentMode + 1) % 5;
         initBricksByMode(m_currentMode);
-    });
-    m_patternTimer->start(15000); //15s一次
-
+    });//循环切换0—4模式
+    m_patternTimer->start(15000);
 
     //创建对象
     m_ball   = new Ball(this);//弹珠
     m_paddle = new Paddle(this);//挡板
     m_score=0;//初始得分
     m_gameover=false;//初始游戏开始
-    // 保存弹珠和挡板的初始位置
-    m_ballStartX = this->width() / 2;
-    m_ballStartY = this->height() - 100;
-    m_paddleStartX = this->width() / 2 - 50;
 
+
+    //动画小人
+
+    //动画定时器
+    m_animTimer = new QTimer(this);
+    m_animTimer->setInterval(120);//120ms切换一帧
+    connect(m_animTimer, &QTimer::timeout, this, [&](){
+        m_curFrame = (m_curFrame + 1) % 2;//0-1循环
+        this->update();//刷新画面
+    });
+    m_animTimer->start();
+
+    // 初始状态
+    m_curFrame = 0;
+    m_moveLeftFlag = false;
+    m_moveRightFlag = false;
+
+    //加载芙宁娜帧图
+    m_roleIdle.load(":/res/photo/Furrina_idle.png");//静止
+
+    m_roleLeft[0].load(":/res/photo/Furrina_left01.png");//向左走
+    m_roleLeft[1].load(":/res/photo/Furrina_left02.png");
+
+    m_roleRight[0].load(":/res/photo/Furrina_right01.png");//向右走
+    m_roleRight[1].load(":/res/photo/Furrina_right02.png");
+
+    //游戏重启时的初始化
+    m_ballStartX = this->width() / 2;//设置弹珠位置
+    m_ballStartY = this->height() - 100;
+    m_paddleStartX = this->width() / 2 - 50;//设置挡板位置
 
     //定时器游戏循环
     m_timer = new QTimer(this);
@@ -50,30 +74,65 @@ MainWindow::~MainWindow()
 }
 
 
-// 循环:移动+碰撞+重绘
+
+//游戏循环:移动+碰撞+重绘
+
+
+//移动
+
 void MainWindow::gameLoop()
 {
-    //弹珠移动
-    m_ball->move();
+    m_ball->move();//弹珠移动
+    m_paddle->checkBorder(this->width());//挡板边界限制
 
-    //挡板边界限制
-    m_paddle->checkBorder(this->width());
+    collisionCheck();//碰撞全部检测
 
-    //碰撞全部检测
-    collisionCheck();
-
-    // 用弹珠的底部位置判断是否超出窗口
     if (m_ball->ball_rect().bottom() > this->height()) {
         m_gameover = true;
-        m_timer->stop();       // 停止游戏循环
-        m_patternTimer->stop();// 停止图形切换
+        m_timer->stop();       //停止游戏循环
+        m_patternTimer->stop();//停止图形切换
+    }//判断弹珠底部是否超出窗口
+
+    update();//刷新画面
+}
+
+//键盘控制挡板移动
+void MainWindow::keyPressEvent(QKeyEvent* e)
+{
+    if(e->key() == Qt::Key_Left)
+    {
+        m_paddle->moveLeft();
+        m_moveLeftFlag  = true;
+        m_moveRightFlag = false;
     }
-    //刷新画面
-    update();
+    else if(e->key() == Qt::Key_Right)
+    {
+        m_paddle->moveRight();
+        m_moveRightFlag = true;
+        m_moveLeftFlag  = false;
+    }
+
+
+    //游戏结束按空格重置
+    if (m_gameover && e->key() == Qt::Key_Space)
+    {
+        resetGame();
+    }
+}
+
+//按键释放
+void MainWindow::keyReleaseEvent(QKeyEvent *e)
+{
+    // 松开左右键 → 切回待机
+    if(e->key() == Qt::Key_Left || e->key() == Qt::Key_Right)
+    {
+        m_moveLeftFlag  = false;
+        m_moveRightFlag = false;
+    }
 }
 
 
-// 碰撞逻辑
+// 碰撞
 void MainWindow::collisionCheck()
 {
     //球和挡板碰撞
@@ -124,8 +183,28 @@ void MainWindow::paintEvent(QPaintEvent *)
     //游戏进行
     if(!m_gameover)
     {
-    //画挡板
-    m_paddle->draw(&p);
+        //画挡板
+        QPixmap drawPic;
+
+        if(m_moveLeftFlag)
+        {
+            drawPic = m_roleLeft[m_curFrame];
+        }
+        else if(m_moveRightFlag)
+        {
+            drawPic = m_roleRight[m_curFrame];
+        }
+        else
+        {
+            drawPic = m_roleIdle;
+        }
+
+        //缩放到挡板尺寸
+        drawPic = drawPic.scaled(m_paddle->paddle_width(), m_paddle->paddle_height()+85,
+                                 Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+        //用挡板坐标绘制
+        p.drawPixmap(m_paddle->paddle_x(), m_paddle->paddle_y(), drawPic);
+
     //画弹珠
     m_ball->draw(&p);
     //画砖块
@@ -154,25 +233,6 @@ void MainWindow::paintEvent(QPaintEvent *)
 }
 
 
-// 键盘控制挡板
-void MainWindow::keyPressEvent(QKeyEvent* e)
-{
-    //左右键控制
-    if(e->key() == Qt::Key_Left)
-    {
-        m_paddle->moveLeft();
-    }
-    else if(e->key() == Qt::Key_Right)
-    {
-        m_paddle->moveRight();
-    }
-    //按空格键重置
-    if (m_gameover && e->key() == Qt::Key_Space) {
-        resetGame();
-        return;
-    }
-}
-
 //重新开始
 void MainWindow::resetGame()
 {
@@ -186,7 +246,7 @@ void MainWindow::resetGame()
     m_ball->resetVelocity();
 
     //重置挡板位置
-    m_paddle->setPos(m_paddleStartX, this->height() - 50);
+    m_paddle->setPos(m_paddleStartX, this->height() - 100);
 
     //重新生成砖块(切回模式0)
     m_currentMode = 0;

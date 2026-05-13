@@ -29,10 +29,11 @@ protected:
     void paintEvent(QPaintEvent*) override;
     //键盘事件
     void keyPressEvent(QKeyEvent*) override;
+    //按键释放
+    void keyReleaseEvent(QKeyEvent*)override;
 
 private slots:
     void gameLoop();   // 游戏主循环定时器
-
 private:
 
     // 创建砖块图案
@@ -46,6 +47,20 @@ private:
 
     // 每15秒切换一次的定时器
     QTimer* m_patternTimer;
+
+
+private:
+    // 人物逐帧图片
+    QPixmap m_roleIdle;//待机
+    QPixmap m_roleLeft[2];//左移2帧
+    QPixmap m_roleRight[2];//右移2帧
+
+    QTimer* m_animTimer;//动画帧切换定时器
+    int m_curFrame;// 当前第几帧 0/1
+    // 记录当前移动状态
+    bool m_moveLeftFlag;
+    bool m_moveRightFlag;
+
 
 private:
     QTimer* m_timer;//定时器
