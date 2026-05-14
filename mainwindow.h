@@ -71,6 +71,15 @@ private:
     const int JUMP_MAX_HEIGHT = 80;//最大跳跃高度
 
 
+    //分身技能相关
+private:
+    QVector<Ball*> m_allBalls; //存放全场所有弹珠
+    void spawnSplitBalls();//技能:生成2个新球，不同贴图
+    //两张贴图
+private:
+    QPixmap m_texBall2;
+    QPixmap m_texBall3;
+
 private:
     QTimer* m_timer;//定时器
     Ball*    m_ball;//弹珠

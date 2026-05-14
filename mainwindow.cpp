@@ -27,6 +27,9 @@ MainWindow::MainWindow(QWidget *parent)
     //创建对象
     m_ball   = new Ball(this);//弹珠
     m_paddle = new Paddle(this);//挡板
+
+    m_allBalls.push_back(m_ball);//把主球加入多球容器
+
     m_score=0;//初始得分
     m_gameover=false;//初始游戏开始
 
@@ -47,7 +50,11 @@ MainWindow::MainWindow(QWidget *parent)
     m_moveLeftFlag = false;
     m_moveRightFlag = false;
 
-    //加载芙宁娜帧图
+    //加载照片
+
+    m_texBall2.load(":/res/photo/Mademoiselle_Crabaletta.png");
+    m_texBall3.load(":/res/photo/Gentilhomme_Usher.png");
+
     m_roleIdle.load(":/res/photo/Furrina_idle.png");//静止
 
     m_roleLeft[0].load(":/res/photo/Furrina_left01.png");//向左走
@@ -82,16 +89,33 @@ MainWindow::~MainWindow()
 
 void MainWindow::gameLoop()
 {
-    m_ball->move();//弹珠移动
+    //所有弹珠移动
+    for(int i = 0; i < m_allBalls.size(); ++i)
+    {
+        m_allBalls[i]->move();
+    }
+
     m_paddle->checkBorder(this->width());//挡板边界限制
 
     collisionCheck();//碰撞全部检测
 
-    if (m_ball->ball_rect().bottom() > this->height()) {
+    bool anyBallAlive = false;
+    for(int i = 0; i < m_allBalls.size(); ++i)
+    {
+        // 球还在窗口内 = 存活
+        if(m_allBalls[i]->ball_rect().bottom() <= this->height())
+        {
+            anyBallAlive = true;
+            break;
+        }
+    }
+
+    if(!anyBallAlive)
+    {
         m_gameover = true;
-        m_timer->stop();       //停止游戏循环
-        m_patternTimer->stop();//停止图形切换
-    }//判断弹珠底部是否超出窗口
+        m_timer->stop();
+        m_patternTimer->stop();
+    }
 
 
 
@@ -119,7 +143,36 @@ void MainWindow::gameLoop()
             m_canJump=true;//已落地，可起跳
         }
     }
+
+    //自动清理已经掉出屏幕的分身
+    for(int i = m_allBalls.size()-1; i >= 0; i--)
+    {
+        Ball* b = m_allBalls[i];
+        //不删主球
+        if(i != 0 && b->ball_rect().bottom() > this->height())
+        {
+            delete b;
+            m_allBalls.removeAt(i);
+        }
+    }
     update();//刷新画面
+}
+
+//技能
+void MainWindow::spawnSplitBalls()
+{
+    Ball* src = m_allBalls[0];
+
+    //分身1
+    Ball* b1 = new Ball(this);
+    b1->setPos(src->ball_x() - 40, src->ball_y());
+    b1->reverseX();
+    m_allBalls.push_back(b1);
+
+    //分身2
+    Ball* b2 = new Ball(this);
+    b2->setPos(src->ball_x() + 40, src->ball_y());
+    m_allBalls.push_back(b2);
 }
 
 //键盘控制挡板移动和跳跃
@@ -144,6 +197,15 @@ void MainWindow::keyPressEvent(QKeyEvent* e)
         m_canJump=false;
     }
 
+    //技能
+    if(e->key() == Qt::Key_Down)
+    {
+        //场上只有1颗球才能召唤
+        if(m_allBalls.size() == 1)
+        {
+            spawnSplitBalls();
+        }
+    }
 
     //游戏结束按空格重置
     if (m_gameover && e->key() == Qt::Key_Space)
@@ -167,41 +229,44 @@ void MainWindow::keyReleaseEvent(QKeyEvent *e)
 // 碰撞
 void MainWindow::collisionCheck()
 {
-    if(m_ball->ball_rect().intersects(m_paddle->paddle_rect()))
+    //统一遍历容器
+    for(int i = 0; i < m_allBalls.size(); ++i)
     {
-        //先反弹速度
-        m_ball->reverseY();
+        Ball* b = m_allBalls[i];
 
-        //强制把小球移出挡板，防止粘连
-        double newY = m_paddle->paddle_y() - m_ball->ball_r() - 2;
-        m_ball->set_ball_y(newY);
-    }
-
-    //球和砖块碰撞
-    for(auto &b : m_bricks)
-    {
-        if(b->isAlive() && m_ball->ball_rect().intersects(b->brick_rect()))
+        // 和挡板碰撞
+        if(b->ball_rect().intersects(m_paddle->paddle_rect()))
         {
-            b->destroy();
-            m_ball->reverseY();
-            m_score+=10;//得分
+            b->reverseY();
+            double newY = m_paddle->paddle_y() - b->ball_r() - 2;
+            b->set_ball_y(newY);
+        }
+
+        // 和砖块
+        for(auto &br : m_bricks)
+        {
+            if(br->isAlive() && b->ball_rect().intersects(br->brick_rect()))
+            {
+                br->destroy();
+                b->reverseY();
+                m_score += 10;
+            }
+        }
+
+        // 左右边界
+        if(b->ball_x() - b->ball_r() <= 0 ||
+            b->ball_x() + b->ball_r() >= this->width())
+        {
+            b->reverseX();
+        }
+
+        // 上边界
+        if(b->ball_y() - b->ball_r() <= 0)
+        {
+            b->reverseY();
         }
     }
-
-    //窗口四边反弹
-    //左右墙
-    if(m_ball->ball_x() - m_ball->ball_r() <= 0 ||
-        m_ball->ball_x() + m_ball->ball_r() >= this->width())
-    {
-        m_ball->reverseX();
-    }
-    //上墙
-    if(m_ball->ball_y() - m_ball->ball_r() <= 0)
-    {
-        m_ball->reverseY();
-    }
-}
-
+ }
 
 // 绘制所有元素
 void MainWindow::paintEvent(QPaintEvent *)
@@ -241,7 +306,27 @@ void MainWindow::paintEvent(QPaintEvent *)
         p.drawPixmap(m_paddle->paddle_x(), m_paddle->paddle_y()-m_jumpOffset, drawPic);
 
     //画弹珠
-    m_ball->draw(&p);
+        for(int i=0;i<m_allBalls.size();i++)
+        {
+            Ball* b = m_allBalls[i];
+            if(i == 0)
+            {
+                b->draw(&p);//主球
+            }
+            else if(i == 1)
+            {
+                int r = b->ball_r();
+                p.drawPixmap(b->ball_x()-r, b->ball_y()-r,
+                             m_texBall2.scaled(2*r,2*r,Qt::IgnoreAspectRatio));
+            }
+            else if(i == 2)
+            {
+                int r = b->ball_r();
+                p.drawPixmap(b->ball_x()-r, b->ball_y()-r,
+                             m_texBall3.scaled(2*r,2*r,Qt::IgnoreAspectRatio));
+            }
+        }
+
     //画砖块
     for(auto &b : m_bricks) b->draw(&p);
     //绘制得分
@@ -287,6 +372,14 @@ void MainWindow::resetGame()
     m_isJumping=false;
     m_canJump=true;
     m_jumpOffset=0;
+
+    //重置弹珠，只留本体
+    for(int i=1;i<m_allBalls.size();i++)
+    {
+        delete m_allBalls[i];
+    }
+    m_allBalls.clear();
+    m_allBalls.push_back(m_ball);
 
     //重新生成砖块(切回模式0)
     m_currentMode = 0;

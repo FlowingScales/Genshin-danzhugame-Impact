@@ -4,13 +4,12 @@
 #include <QObject>
 #include <QPainter>
 #include <QRect>
+#include <QPixmap>
 class Ball : public QObject
 {
     Q_OBJECT
 public:
     explicit Ball(QObject *parent = nullptr);
-
-signals:
 
 private:
     //弹珠圆心坐标
@@ -32,6 +31,7 @@ void draw(QPainter* painter);
 void reverseX();//水平分速度
 void reverseY();//竖直分速度
 void set_ball_y(double y);//小球y坐标
+
 
 //属性调用函数
 int ball_x() const;
