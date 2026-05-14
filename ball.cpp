@@ -33,6 +33,11 @@ void Ball::reverseY()//竖直分速度
 }
 
 //弹珠属性获取
+void Ball::set_ball_y(double y)
+{
+    m_y = y;
+}
+
 int Ball::ball_x() const     {return m_x;}
 int Ball::ball_y() const     {return m_y;}
 int Ball::ball_r() const     {return m_r;}

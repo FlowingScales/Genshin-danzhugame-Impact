@@ -31,6 +31,7 @@ void draw(QPainter* painter);
 //碰撞反弹
 void reverseX();//水平分速度
 void reverseY();//竖直分速度
+void set_ball_y(double y);//小球y坐标
 
 //属性调用函数
 int ball_x() const;

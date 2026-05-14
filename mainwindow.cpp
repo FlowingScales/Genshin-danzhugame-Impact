@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     this->resize(1150,900);
 
     //砖块图案
-    m_currentMode=0;//初始化从模式-0开始
+    m_currentMode=0;//初始化从模式0开始
     initBricksByMode(m_currentMode);
     m_patternTimer = new QTimer(this);  //切换图案的定时器
     connect(m_patternTimer, &QTimer::timeout, this, [=](){
@@ -167,10 +167,14 @@ void MainWindow::keyReleaseEvent(QKeyEvent *e)
 // 碰撞
 void MainWindow::collisionCheck()
 {
-    //球和挡板碰撞
     if(m_ball->ball_rect().intersects(m_paddle->paddle_rect()))
     {
+        //先反弹速度
         m_ball->reverseY();
+
+        //强制把小球移出挡板，防止粘连
+        double newY = m_paddle->paddle_y() - m_ball->ball_r() - 2;
+        m_ball->set_ball_y(newY);
     }
 
     //球和砖块碰撞
@@ -180,19 +184,18 @@ void MainWindow::collisionCheck()
         {
             b->destroy();
             m_ball->reverseY();
-            m_score+=10;//打一个砖+10分
+            m_score+=10;//得分
         }
     }
 
     //窗口四边反弹
-
     //左右墙
     if(m_ball->ball_x() - m_ball->ball_r() <= 0 ||
         m_ball->ball_x() + m_ball->ball_r() >= this->width())
     {
         m_ball->reverseX();
     }
-    //上下墙
+    //上墙
     if(m_ball->ball_y() - m_ball->ball_r() <= 0)
     {
         m_ball->reverseY();
