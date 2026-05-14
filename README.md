@@ -24,3 +24,8 @@ v2.0
 v3.0 
 - Fixed ball-paddle collision sticking bug
 - Updated game background
+
+v4.0
+- Added down arrow key skill to spawn 2 extra balls
+- Skill only usable when only the main ball remains alive
+- Added auto cleanup for dead balls to reset skill availability
