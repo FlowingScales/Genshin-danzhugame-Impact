@@ -20,3 +20,7 @@ V1.0
 v2.0
 - Added paddle jump function (Up Arrow key)
 - Replaced default ball with custom texture
+
+v3.0 
+- Fixed ball-paddle collision sticking bug
+- Updated game background
